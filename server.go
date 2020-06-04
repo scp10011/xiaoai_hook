@@ -24,12 +24,17 @@ type (
 	}
 	playerStatusResult struct {
 		Code int `json:"code"`
-		ubusPlayStatus
+		ubusPlayDetailStatus
 	}
 	playerControl       struct{}
 	playerControlParams struct {
 		Token  string `json:"token"`
 		Method string `json:"method"`
+	}
+	volumeControl       struct{}
+	volumeControlParams struct {
+		Token    string      `json:"token"`
+		Operator interface{} `json:"operator"`
 	}
 )
 
@@ -71,7 +76,7 @@ func (h playerStatus) ServeJSONRPC(c context.Context, params *fastjson.RawMessag
 	if !authenticate(p.Token) {
 		return playerStatusResult{Code: -5}, nil
 	}
-	status := getPlayerStatus()
+	status := getPlayerDetailStatus()
 	return playerStatusResult{
 		0, *status,
 	}, nil
@@ -92,6 +97,28 @@ func (h playerControl) ServeJSONRPC(c context.Context, params *fastjson.RawMessa
 	}
 }
 
+func (h volumeControl) ServeJSONRPC(c context.Context, params *fastjson.RawMessage) (interface{}, *jsonrpc.Error) {
+	var p volumeControlParams
+	if err := jsonrpc.Unmarshal(params, &p); err != nil {
+		return nil, err
+	}
+	if !authenticate(p.Token) {
+		return Result{Code: -1}, nil
+	}
+	flag := false
+	switch p.Operator.(type) {
+	case string:
+		flag = adjustVolume(p.Operator.(string))
+	case float64:
+		flag = editVolume(p.Operator.(float64))
+	}
+	if flag {
+		return Result{Code: 0}, nil
+	} else {
+		return Result{Code: -1}, nil
+	}
+}
+
 func jsonRpcServer() {
 	mr := jsonrpc.NewMethodRepository()
 	if err := mr.RegisterMethod("TTS", ttsBroadcast{}, ttsBroadcastParams{}, Result{}); err != nil {
@@ -101,6 +128,9 @@ func jsonRpcServer() {
 		log.Fatalln(err)
 	}
 	if err := mr.RegisterMethod("CONTROL", playerControl{}, playerControlParams{}, Result{}); err != nil {
+		log.Fatalln(err)
+	}
+	if err := mr.RegisterMethod("VOLUME", volumeControl{}, volumeControlParams{}, Result{}); err != nil {
 		log.Fatalln(err)
 	}
 	Handle("/", mr)

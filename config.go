@@ -15,6 +15,7 @@ import (
 )
 
 const resFile = "/tmp/mipns/mibrain/mibrain_txt_RESULT_NLP.log"
+const answerFile = "/tmp/mipns/mibrain/mibrain_nlp_answer.log"
 
 var controlMethod = map[string]bool{"ch": true, "prev": true, "next": true, "play": true, "pause": true, "toggle": true, "resume": true}
 

@@ -14,13 +14,15 @@ func monitoring(upstream string) {
 		log.Fatal(err)
 	}
 	defer watch.Close()
-
 	if err != nil {
 		log.Fatal(err)
 	}
-	var flag bool
-	oldRequestId := ""
 	err = watch.Add(resFile)
+	var (
+		flag         bool
+		resp         []byte
+		oldRequestId string
+	)
 	for {
 		select {
 		case ev := <-watch.Events:
@@ -48,8 +50,13 @@ func monitoring(upstream string) {
 						flag = true
 					}
 					if flag {
+						if resp, err = ioutil.ReadFile(answerFile); err != nil {
+							log.Print(err)
+							resp = []byte("{\"text\": \"哎呀，小爱刚刚走神啦，请再说一遍吧\"}")
+						}
+						answer := fastjson.GetString(resp, "text")
 						log.Printf("尝试拦截默认响应...")
-						go forwardMsg(upstream, []string{string(b)})
+						go forwardMsg(upstream, []string{string(b)}, []string{answer})
 						waitResumePlayer()
 					}
 				} else {
@@ -67,9 +74,9 @@ func monitoring(upstream string) {
 	}
 }
 
-func forwardMsg(upstream string, res []string) {
+func forwardMsg(upstream string, res []string, answer []string) {
 	log.Printf("转发请求...")
-	resp, err := netClient.PostForm(upstream, url.Values{"asr": []string{"{}"}, "res": res})
+	resp, err := netClient.PostForm(upstream, url.Values{"asr": []string{"{}"}, "res": res, "answer": answer})
 	if err != nil {
 		log.Fatal(err)
 	}
