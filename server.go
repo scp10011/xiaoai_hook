@@ -13,7 +13,7 @@ type (
 	ttsBroadcast       struct{}
 	ttsBroadcastParams struct {
 		Token string `json:"token"`
-		Msg   string `json:"name"`
+		Msg   string `json:"msg"`
 	}
 	Result struct {
 		Code int `json:"code"`
@@ -103,7 +103,7 @@ func jsonRpcServer() {
 	if err := mr.RegisterMethod("CONTROL", playerControl{}, playerControlParams{}, Result{}); err != nil {
 		log.Fatalln(err)
 	}
-	Handle("/jsonrpc", mr)
+	Handle("/", mr)
 	port := fmt.Sprintf(":%d", *rpcPort)
 	if err := ListenAndServe(port, DefaultServeMux); err != nil {
 		log.Fatalln(err)

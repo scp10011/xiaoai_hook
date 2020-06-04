@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	goahocorasick "github.com/anknown/ahocorasick"
 	"github.com/sevlyar/go-daemon"
 	"log"
 	"net/http"
@@ -27,12 +29,13 @@ var serverUrl = flag.String("url", "", "服务器URL")
 var refreshTime = flag.Int("interval", 60, "刷新间隔时间,0为禁用")
 var keys = flag.String("key", "", "拦截关键词用|分割")
 var token = flag.String("token", "", "rpc认证token")
+var ac = new(goahocorasick.Machine)
 
 var netClient = &http.Client{
 	Timeout: time.Second * 10,
 }
 
-var keyWords []string
+var keyWords [][]rune
 
 var (
 	stop = make(chan struct{})
@@ -100,10 +103,15 @@ func worker() {
 	log.Printf("正在启动...")
 	key := *keys
 	if key != "" {
-		k := strings.Split(key, "|")
-		keyWords = append(keyWords, k...)
+		log.Printf("拦截词列表: %s", key)
+		for _, key := range strings.Split(key, "|") {
+			keyWords = append(keyWords, bytes.Runes([]byte(key)))
+		}
+		if err := ac.Build(keyWords); err != nil {
+			log.Fatal(err)
+			os.Exit(-1)
+		}
 	}
-	log.Printf("拦截词列表: %s", strings.Join(keyWords, "|"))
 	if *refreshTime != 0 {
 		log.Printf("启动拦截词刷新器,频率: %d秒", *refreshTime)
 		go refresh(keyWordUrl)

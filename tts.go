@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"sync"
 	"time"
 )
+
+var mutex sync.Mutex
 
 type ubusResult struct {
 	Code int    `json:"code"`
@@ -55,18 +58,25 @@ func getPlayerStatus() *ubusPlayStatus {
 }
 
 func playerTTS(tts string) bool {
+	log.Printf("TTS播报: %s", tts)
 	argv := fmt.Sprintf("{\"text\":\"%s\",\"save\":0}", tts)
 	cmd := exec.Command("ubus", "call", "mibrain", "text_to_speech", argv)
-	cmd.Start()
-	err := cmd.Wait()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("Command finished with error: %v", err)
-		return false
+		log.Fatal(err)
 	}
-	return true
+	result := &ubusResult{}
+	err = json.Unmarshal(output, result)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("TTS状态: %d, 存储到 %s", result.Code, result.Info)
+	return result.Code == 0
 }
 
 func waitPlayerTTS(tts string) int {
+	mutex.Lock()
+	defer func() { mutex.Unlock() }()
 	if playerTTS(tts) == false {
 		return -1
 	}
@@ -79,10 +89,12 @@ func waitPlayerTTS(tts string) int {
 }
 
 func waitResumePlayer() {
+	mutex.Lock()
+	defer func() { mutex.Unlock() }()
 	for i := 1; i <= 100; i++ {
 		if playingControl("resume") == 0 {
 			break
 		}
 	}
-	log.Printf("拦截默认响应")
+	log.Printf("拦截响应成功")
 }
