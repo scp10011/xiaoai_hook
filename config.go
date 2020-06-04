@@ -70,7 +70,9 @@ func main() {
 		if err != nil {
 			log.Fatalf("无法发送信号到守护程序: %s", err.Error())
 		}
-		daemon.SendCommands(d)
+		if err = daemon.SendCommands(d); err != nil {
+			log.Fatalf("守护程序发送命令失败: %s", err.Error())
+		}
 		return
 	}
 	d, err := context.Reborn()
@@ -109,7 +111,6 @@ func worker() {
 		}
 		if err := ac.Build(keyWords); err != nil {
 			log.Fatal(err)
-			os.Exit(-1)
 		}
 	}
 	if *refreshTime != 0 {

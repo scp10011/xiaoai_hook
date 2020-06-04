@@ -28,7 +28,7 @@ func monitoring(upstream string) {
 				if ev.Op&fsnotify.Write == fsnotify.Write {
 					b, err := ioutil.ReadFile(resFile)
 					if err != nil {
-						log.Fatal(err)
+						log.Print(err)
 						continue
 					}
 					requestId := fastjson.GetString(b, "meta", "request_id")

@@ -18,7 +18,7 @@ func refresh(url string) {
 		body, err := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
 			continue
 		}
 		newText := string(body)
