@@ -44,12 +44,14 @@ func playingControl(s string) int {
 	cmd := exec.Command("ubus", "call", "mediaplayer", "player_play_operation", argv)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return -1
 	}
 	result := &ubusResult{}
 	err = json.Unmarshal(output, result)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return -1
 	}
 	return result.Code
 }
@@ -57,18 +59,19 @@ func playingControl(s string) int {
 func getPlayerStatus() *ubusPlayStatus {
 	cmd := exec.Command("ubus", "-t", "1 ", "call", "mediaplayer", "player_get_play_status")
 	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Fatal(err)
-	}
 	result := &ubusResult{}
 	status := &ubusPlayStatus{}
+	if err != nil {
+		log.Print(err)
+		return status
+	}
 	err = json.Unmarshal(output, result)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 	err = json.Unmarshal([]byte(result.Info), status)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 	return status
 }
@@ -76,23 +79,24 @@ func getPlayerStatus() *ubusPlayStatus {
 func getPlayerDetailStatus() *ubusPlayDetailStatus {
 	cmd := exec.Command("ubus", "-t", "1 ", "call", "mediaplayer", "player_get_play_status")
 	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Fatal(err)
-	}
 	result := &ubusResult{}
 	status := &ubusPlayDetailStatus{}
+	if err != nil {
+		log.Print(err)
+		return status
+	}
 	err = json.Unmarshal(output, result)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 	err = json.Unmarshal([]byte(result.Info), status)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 	trackLength := len(status.Track)
 	for i := 0; i < trackLength; {
 		if status.Track[i].CpOrigin == "" {
-			trackLength -= 1
+			trackLength--
 			status.Track[i] = status.Track[trackLength]
 			status.Track = status.Track[:trackLength]
 		} else {
@@ -108,12 +112,14 @@ func playerTTS(tts string) bool {
 	cmd := exec.Command("ubus", "call", "mibrain", "text_to_speech", argv)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return false
 	}
 	result := &ubusResult{}
 	err = json.Unmarshal(output, result)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return false
 	}
 	log.Printf("TTS状态: %d, URL: %s", result.Code, result.Info)
 	return result.Code == 0
@@ -124,12 +130,14 @@ func editVolume(v float64) bool {
 		cmd := exec.Command("mphelper", "volume_set", fmt.Sprint(v))
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			return false
 		}
 		result := &Result{}
 		err = json.Unmarshal(output, result)
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			return false
 		}
 		log.Printf("设置音量到: %v", v)
 		return result.Code == 0
@@ -150,12 +158,14 @@ func adjustVolume(mode string) bool {
 	cmd := exec.Command("mphelper", operator)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return false
 	}
 	result := &Result{}
 	err = json.Unmarshal(output, result)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return false
 	}
 	return result.Code == 0
 }
@@ -175,6 +185,7 @@ func waitPlayerTTS(tts string) int {
 }
 
 func waitResumePlayer() {
+	log.Printf("尝试拦截默认响应...")
 	mutex.Lock()
 	defer func() { mutex.Unlock() }()
 	for i := 1; i <= 100; i++ {

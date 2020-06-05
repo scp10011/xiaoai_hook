@@ -14,10 +14,11 @@ func refresh(url string) {
 	for {
 		resp, err := netClient.Get(url)
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			continue
 		}
 		body, err := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil {
 			log.Print(err)
 			continue
@@ -43,8 +44,8 @@ func forwardMsg(upstream string, res []string, answer []string) {
 	log.Printf("转发请求...")
 	resp, err := netClient.PostForm(upstream, url.Values{"asr": []string{"{}"}, "res": res, "answer": answer})
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("转发失败: %s\n", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	log.Printf("转发成功")
 }

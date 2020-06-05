@@ -14,10 +14,10 @@ func monitoring(upstream string) {
 		log.Fatal(err)
 	}
 	defer watch.Close()
+	err = watch.Add(resFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = watch.Add(resFile)
 	var (
 		flag         bool
 		resp         []byte
@@ -46,14 +46,13 @@ func monitoring(upstream string) {
 						break
 					}
 					if flag {
+						go waitResumePlayer()
 						if resp, err = ioutil.ReadFile(answerFile); err != nil {
 							log.Print(err)
 							resp = []byte("{\"text\": \"哎呀，小爱刚刚走神啦，请再说一遍吧\"}")
 						}
 						answer := fastjson.GetString(resp, "text")
-						log.Printf("尝试拦截默认响应...")
 						go forwardMsg(upstream, []string{string(b)}, []string{answer})
-						waitResumePlayer()
 					}
 				} else {
 					return
