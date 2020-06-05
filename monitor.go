@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"github.com/fsnotify/fsnotify"
 	"github.com/valyala/fastjson"
 	"io/ioutil"
 	"log"
-	"net/url"
 )
 
 func monitoring(upstream string) {
@@ -40,14 +40,10 @@ func monitoring(upstream string) {
 					oldRequestId = requestId
 					log.Printf("检测到文件变动")
 					flag = false
-					text := fastjson.GetString(b, "response", "answer", "0", "text")
-					if len(text) == 0 {
-						continue
-					}
-					log.Printf("检测语句: %s", text)
-					for _, t := range ac.MultiPatternSearch([]rune(text), false) {
+					for _, t := range ac.MultiPatternSearch(bytes.Runes(b), false) {
 						log.Printf("触发拦截词: %s", string(t.Word))
 						flag = true
+						break
 					}
 					if flag {
 						if resp, err = ioutil.ReadFile(answerFile); err != nil {
@@ -72,14 +68,4 @@ func monitoring(upstream string) {
 			}
 		}
 	}
-}
-
-func forwardMsg(upstream string, res []string, answer []string) {
-	log.Printf("转发请求...")
-	resp, err := netClient.PostForm(upstream, url.Values{"asr": []string{"{}"}, "res": res, "answer": answer})
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
-	log.Printf("转发成功")
 }

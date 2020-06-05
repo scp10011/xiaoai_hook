@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"time"
 )
 
@@ -36,4 +37,14 @@ func refresh(url string) {
 		time.Sleep(second)
 	}
 
+}
+
+func forwardMsg(upstream string, res []string, answer []string) {
+	log.Printf("转发请求...")
+	resp, err := netClient.PostForm(upstream, url.Values{"asr": []string{"{}"}, "res": res, "answer": answer})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	log.Printf("转发成功")
 }
