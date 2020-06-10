@@ -179,7 +179,7 @@ func waitPlayerTTS(tts string) int {
 	temp := getPlayerStatus()
 	for temp.MediaType == 1 {
 		temp = getPlayerStatus()
-		time.Sleep(1 * time.Second)
+		time.Sleep(50 * time.Microsecond)
 	}
 	return 0
 }
@@ -188,10 +188,10 @@ func waitResumePlayer() {
 	log.Printf("尝试拦截默认响应...")
 	mutex.Lock()
 	defer func() { mutex.Unlock() }()
-	for i := 1; i <= 100; i++ {
-		if playingControl("resume") == 0 {
-			break
-		}
+	temp := getPlayerStatus()
+	for temp.Status == 1 {
+		_ = playingControl("resume")
 	}
+	_ = playerTTS("稍等") // 尝试顶掉卡住的输出
 	log.Printf("拦截响应成功")
 }
