@@ -109,20 +109,20 @@ func getPlayerDetailStatus() *ubusPlayDetailStatus {
 func playerTTS(tts string) bool {
 	log.Printf("TTS播报: %s", tts)
 	argv := fmt.Sprintf("{\"text\":\"%s\",\"save\":0}", tts)
-	cmd := exec.Command("ubus", "call", "mibrain", "text_to_speech", argv)
-	output, err := cmd.CombinedOutput()
+	cmd := exec.Command("ubus", "call", "mibrain", "text_to_speech", argv, "&")
+	_, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Print(err)
 		return false
 	}
-	result := &ubusResult{}
-	err = json.Unmarshal(output, result)
-	if err != nil {
-		log.Print(err)
-		return false
-	}
-	log.Printf("TTS状态: %d, URL: %s", result.Code, result.Info)
-	return result.Code == 0
+	//result := &ubusResult{}
+	//err = json.Unmarshal(output, result)
+	//if err != nil {
+	//	log.Print(err)
+	//	return false
+	//}
+	// log.Printf("TTS状态: %d, URL: %s", result.Code, result.Info)
+	return true
 }
 
 func editVolume(v float64) bool {
