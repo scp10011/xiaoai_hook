@@ -109,19 +109,19 @@ func getPlayerDetailStatus() *ubusPlayDetailStatus {
 func playerTTS(tts string) bool {
 	log.Printf("TTS播报: %s", tts)
 	argv := fmt.Sprintf("{\"text\":\"%s\",\"save\":0}", tts)
-	cmd := exec.Command("ubus", "call", "mibrain", "text_to_speech", argv, "&")
-	_, err := cmd.CombinedOutput()
+	cmd := exec.Command("ubus", "call", "mibrain", "text_to_speech", argv)
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Print(err)
 		return false
 	}
-	//result := &ubusResult{}
-	//err = json.Unmarshal(output, result)
-	//if err != nil {
-	//	log.Print(err)
-	//	return false
-	//}
-	// log.Printf("TTS状态: %d, URL: %s", result.Code, result.Info)
+	result := &ubusResult{}
+	err = json.Unmarshal(output, result)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+	log.Printf("TTS状态: %d, URL: %s", result.Code, result.Info)
 	return true
 }
 
@@ -188,10 +188,10 @@ func waitResumePlayer() {
 	log.Printf("尝试拦截默认响应...")
 	mutex.Lock()
 	defer func() { mutex.Unlock() }()
-	temp := getPlayerStatus()
+        temp := getPlayerStatus();
 	for temp.Status == 1 {
+                temp = getPlayerStatus();
 		_ = playingControl("resume")
 	}
-	_ = playerTTS("稍等") // 尝试顶掉卡住的输出
 	log.Printf("拦截响应成功")
 }
